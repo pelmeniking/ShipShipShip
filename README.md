@@ -3,7 +3,7 @@
 A modern, self-hostable changelog and roadmap platform with emoji reactions, custom themes, and automated newsletters.
 
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
-![Go Version](https://img.shields.io/badge/go-1.21-blue.svg)
+![Go Version](https://img.shields.io/badge/go-1.27-blue.svg)
 ![Node Version](https://img.shields.io/badge/node-20+-green.svg)
 ![Docker](https://img.shields.io/badge/docker-ready-blue.svg)
 
@@ -30,7 +30,7 @@ A modern, self-hostable changelog and roadmap platform with emoji reactions, cus
 ## 🏗️ Tech Stack
 
 **Admin:** SvelteKit 2 · Svelte 5 · TailwindCSS · shadcn-svelte · TipTap  
-**Backend:** Go 1.21 · Gin · SQLite · GORM  
+**Backend:** Go 1.27 · Gin · SQLite · GORM  
 **Deploy:** Docker (AMD64 & ARM64)
 
 ## 🚀 Quick Start
