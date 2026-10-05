@@ -6,6 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"shipshipship/database"
+	"shipshipship/models"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -21,14 +24,16 @@ func init() {
 }
 
 type Claims struct {
+	UserID   uint   `json:"user_id"`
 	Username string `json:"username"`
 	jwt.RegisteredClaims
 }
 
-func GenerateToken(username string) (string, error) {
+func GenerateToken(user *models.User) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
-		Username: username,
+		UserID:   user.ID,
+		Username: user.Username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -61,6 +66,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		// Skip authentication in demo mode
 		if IsDemoMode() {
 			c.Set("username", "demo")
+			c.Set("role", models.RoleAdmin)
 			c.Next()
 			return
 		}
@@ -80,29 +86,37 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		claims, err := ValidateToken(tokenParts[1])
-		if err != nil {
+		if err != nil || claims.UserID == 0 {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			c.Abort()
 			return
 		}
 
-		c.Set("username", claims.Username)
+		// Load the user on every request so role changes and deactivation apply immediately
+		var user models.User
+		if err := database.GetDB().First(&user, claims.UserID).Error; err != nil || !user.Active {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Abort()
+			return
+		}
+
+		c.Set("user_id", user.ID)
+		c.Set("username", user.Username)
+		c.Set("role", user.Role)
 		c.Next()
 	}
 }
 
-func CheckAdminCredentials(username, password string) bool {
-	adminUsername := os.Getenv("ADMIN_USERNAME")
-	adminPassword := os.Getenv("ADMIN_PASSWORD")
-
-	if adminUsername == "" {
-		adminUsername = "admin"
+// RequireRole only lets users with the given role through. Must run after AuthMiddleware.
+func RequireRole(role string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if c.GetString("role") != role {
+			c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to do this"})
+			c.Abort()
+			return
+		}
+		c.Next()
 	}
-	if adminPassword == "" {
-		adminPassword = "admin"
-	}
-
-	return username == adminUsername && password == adminPassword
 }
 
 func IsDemoMode() bool {

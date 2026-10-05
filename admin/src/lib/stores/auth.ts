@@ -1,5 +1,6 @@
-import { writable } from "svelte/store";
+import { derived, writable } from "svelte/store";
 import { api } from "$lib/api";
+import type { CurrentUser } from "$lib/types";
 
 let isDemoMode = false;
 
@@ -8,7 +9,7 @@ export interface AuthState {
   loading: boolean;
   initialized: boolean;
   isDemoMode: boolean;
-  user?: { username: string };
+  user?: CurrentUser;
 }
 
 // Create the auth store with initial state
@@ -39,7 +40,11 @@ function createAuthStore() {
             loading: false,
             initialized: true,
             isDemoMode: true,
-            user: { username: "Demo User" },
+            user: {
+              username: "demo",
+              display_name: "Demo User",
+              role: "admin",
+            },
           });
           return true;
         }
@@ -60,7 +65,13 @@ function createAuthStore() {
           loading: false,
           initialized: true,
           isDemoMode: false,
-          user: { username: result.username },
+          user: {
+            id: result.id,
+            username: result.username,
+            display_name: result.display_name,
+            email: result.email,
+            role: result.role,
+          },
         });
         return true;
       } catch {
@@ -76,7 +87,7 @@ function createAuthStore() {
     },
 
     // Set authenticated state after login
-    setAuthenticated(user?: { username: string }) {
+    setAuthenticated(user?: CurrentUser) {
       set({
         isAuthenticated: true,
         loading: false,
@@ -112,3 +123,9 @@ function createAuthStore() {
 }
 
 export const authStore = createAuthStore();
+
+// True when the signed-in user may manage settings, appearance, newsletter and users
+export const isAdmin = derived(
+  authStore,
+  ($auth) => $auth.isDemoMode || $auth.user?.role === "admin",
+);

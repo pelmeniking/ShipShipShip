@@ -1,7 +1,7 @@
 <script lang="ts">
     import { page } from "$app/stores";
     import { goto } from "$app/navigation";
-    import { authStore } from "$lib/stores/auth";
+    import { authStore, isAdmin } from "$lib/stores/auth";
     import { theme } from "$lib/stores/theme";
     import { emptyCategoriesStore } from "$lib/stores/emptyCategories";
     import { api } from "$lib/api";
@@ -27,6 +27,8 @@
         Moon,
         AlertTriangle,
         Settings,
+        Users,
+        UserCircle,
     } from "lucide-svelte";
 
     export let collapsed = false;
@@ -41,7 +43,11 @@
 
     $: hasEmptyCategories = $emptyCategoriesStore.hasEmptyCategories;
 
-    $: menuItems = [
+    $: menuItems = (
+        $isAdmin ? allMenuItems : allMenuItems.filter((item) => !item.adminOnly)
+    ) as typeof allMenuItems;
+
+    $: allMenuItems = [
         {
             label: "Events",
             labelText: m.sidebar_events(),
@@ -50,6 +56,7 @@
         },
         {
             label: "Appearance",
+            adminOnly: true,
             labelText: m.sidebar_appearance(),
             href: "/admin/appearance",
             icon: Palette,
@@ -70,15 +77,30 @@
         },
         {
             label: "Newsletter",
+            adminOnly: true,
             labelText: m.sidebar_newsletter(),
             href: "/admin/newsletter",
             icon: Mail,
         },
         {
             label: "Settings",
+            adminOnly: true,
             labelText: m.sidebar_settings(),
             href: "/admin/settings",
             icon: Settings,
+        },
+        {
+            label: "Users",
+            adminOnly: true,
+            labelText: m.sidebar_users(),
+            href: "/admin/users",
+            icon: Users,
+        },
+        {
+            label: "Account",
+            labelText: m.sidebar_account(),
+            href: "/admin/account",
+            icon: UserCircle,
         },
     ];
 

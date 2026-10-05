@@ -3,7 +3,7 @@
     import { onMount } from "svelte";
     import { goto } from "$app/navigation";
     import { page } from "$app/stores";
-    import { authStore } from "$lib/stores/auth";
+    import { authStore, isAdmin } from "$lib/stores/auth";
     import AdminSidebar from "$lib/components/AdminSidebar.svelte";
     import { Toaster } from "$lib/components/ui/sonner";
     import { theme } from "$lib/stores/theme";
@@ -22,6 +22,21 @@
         if (typeof document !== "undefined") {
             document.documentElement.dir = direction;
         }
+    }
+
+    // Editors may only use the events board and their own account page
+    const editorPaths = ["/admin/events", "/admin/account"];
+    $: if (
+        $authStore.isAuthenticated &&
+        !$isAdmin &&
+        $page.url.pathname.startsWith("/admin/") &&
+        !editorPaths.some(
+            (p) =>
+                $page.url.pathname === p ||
+                $page.url.pathname.startsWith(p + "/"),
+        )
+    ) {
+        goto("/admin/events", { replaceState: true });
     }
 
     // Collapse sidebar by default on events page

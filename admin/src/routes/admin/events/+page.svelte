@@ -3,7 +3,7 @@
     import { onMount, tick } from "svelte";
     import { goto } from "$app/navigation";
     import { api } from "$lib/api";
-    import { authStore } from "$lib/stores/auth";
+    import { authStore, isAdmin } from "$lib/stores/auth";
     import { parseEvent } from "$lib/utils";
     import type { ParsedEvent, EventStatus } from "$lib/types";
     import {
@@ -1293,15 +1293,17 @@
                             <Calendar class="h-4 w-4" />
                             {m.events_page_new_event()}
                         </button>
-                        <button
-                            type="button"
-                            class="w-full text-start px-2 py-1 rounded hover:bg-muted flex items-center gap-2"
-                            on:click={startCreatingNewStatus}
-                            role="menuitem"
-                        >
-                            <Columns class="h-4 w-4" />
-                            {m.events_page_new_status()}
-                        </button>
+                        {#if $isAdmin}
+                            <button
+                                type="button"
+                                class="w-full text-start px-2 py-1 rounded hover:bg-muted flex items-center gap-2"
+                                on:click={startCreatingNewStatus}
+                                role="menuitem"
+                            >
+                                <Columns class="h-4 w-4" />
+                                {m.events_page_new_status()}
+                            </button>
+                        {/if}
                     </div>
                 {/if}
             </div>
@@ -1340,6 +1342,7 @@
         {:else if viewMode === "kanban"}
             <!-- Kanban Board -->
             <KanbanView
+                canManageStatuses={$isAdmin}
                 {columns}
                 {statuses}
                 {statusCategoryMap}
@@ -1393,6 +1396,7 @@
         {:else if viewMode === "list"}
             <!-- List View -->
             <ListView
+                canManageStatuses={$isAdmin}
                 {columns}
                 {statuses}
                 {statusCategoryMap}

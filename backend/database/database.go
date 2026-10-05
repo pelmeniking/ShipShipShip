@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"shipshipship/models"
 
 	"gorm.io/driver/sqlite"
@@ -80,6 +82,7 @@ func migrate() error {
 		&models.NewsletterAutomationSettings{},
 		&models.StatusCategoryMapping{},
 		&models.ThemeSettingValue{},
+		&models.User{},
 	); err != nil {
 		// If AutoMigrate fails on project_settings, it's likely corrupted
 		log.Printf("AutoMigrate failed: %v", err)
@@ -101,6 +104,11 @@ func migrate() error {
 	// Seed status definitions (reserved + legacy)
 	if err := models.SeedStatusDefinitions(DB); err != nil {
 		log.Printf("Warning: Failed to seed status definitions: %v", err)
+	}
+
+	// Create the first admin account from ADMIN_USERNAME / ADMIN_PASSWORD
+	if err := seedInitialAdmin(DB); err != nil {
+		log.Printf("Warning: Failed to create initial admin user: %v", err)
 	}
 
 	// Ensure newsletter automation settings table exists (manual fallback)
@@ -285,4 +293,53 @@ func cleanupRemovedColumnsAndTables(db *gorm.DB) error {
 
 func GetDB() *gorm.DB {
 	return DB
+}
+
+// seedInitialAdmin creates the first admin account from the ADMIN_USERNAME and
+// ADMIN_PASSWORD environment variables when no users exist yet. Existing
+// installations keep working with their current credentials; after that the
+// account is managed in the admin panel and the variables are no longer read.
+func seedInitialAdmin(db *gorm.DB) error {
+	var count int64
+	if err := db.Model(&models.User{}).Count(&count).Error; err != nil {
+		return err
+	}
+	if count > 0 {
+		return nil
+	}
+
+	username := os.Getenv("ADMIN_USERNAME")
+	password := os.Getenv("ADMIN_PASSWORD")
+
+	// Demo mode (both empty) runs without accounts
+	if username == "" && password == "" {
+		return nil
+	}
+	if username == "" {
+		username = "admin"
+	}
+	if password == "" {
+		password = "admin"
+	}
+
+	// Hash directly: the env password predates the minimum length rule
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	admin := models.User{
+		Username:     username,
+		DisplayName:  username,
+		PasswordHash: string(hash),
+		Role:         models.RoleAdmin,
+		Active:       true,
+		AuthProvider: models.AuthProviderLocal,
+	}
+	if err := db.Create(&admin).Error; err != nil {
+		return err
+	}
+
+	log.Printf("Created initial admin user %q from ADMIN_USERNAME/ADMIN_PASSWORD", username)
+	return nil
 }
