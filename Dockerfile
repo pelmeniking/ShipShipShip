@@ -1,16 +1,14 @@
 # Multi-stage build for admin panel and backend (AMD64 & ARM64)
 
 # Stage 1: Build the admin panel
-FROM node:20-slim AS admin-build
+FROM node:22-slim AS admin-build
 WORKDIR /app/admin
 
 # Copy admin package files
 COPY admin/package*.json ./
 
-# Clear npm cache and install dependencies
-RUN npm cache clean --force && \
-    rm -rf node_modules package-lock.json && \
-    npm install
+# Install the exact dependency versions from package-lock.json
+RUN npm ci
 
 # Copy admin source
 COPY admin/ ./
@@ -19,7 +17,7 @@ COPY admin/ ./
 RUN npm run build
 
 # Stage 2: Build the backend
-FROM golang:1.21-bullseye AS backend-build
+FROM golang:1.27-trixie AS backend-build
 WORKDIR /app/backend
 
 # Install dependencies for CGO + SQLite
@@ -40,7 +38,7 @@ COPY backend/ ./
 RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o main .
 
 # Stage 3: Final runtime image
-FROM debian:bullseye-slim
+FROM debian:trixie-slim
 WORKDIR /app
 
 # Runtime deps (include sqlite3 which pulls libsqlite3-0)
