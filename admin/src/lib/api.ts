@@ -16,6 +16,10 @@ import type {
   ReorderFooterLinksRequest,
   NewsletterAutomationSettings,
   UpdateNewsletterAutomationRequest,
+  User,
+  CreateUserRequest,
+  UpdateUserRequest,
+  CurrentUser,
 } from "./types";
 
 // Runtime API base resolution to avoid SSR picking the wrong value.
@@ -110,9 +114,42 @@ class ApiClient {
   }
 
   async validateToken() {
-    return this.request<{ valid: boolean; username: string }>(
-      "/admin/validate",
-    );
+    return this.request<CurrentUser & { valid: boolean }>("/admin/validate");
+  }
+
+  async changeOwnPassword(currentPassword: string, newPassword: string) {
+    return this.request<{ message: string }>("/admin/me/password", {
+      method: "PUT",
+      body: JSON.stringify({
+        current_password: currentPassword,
+        new_password: newPassword,
+      }),
+    });
+  }
+
+  // User management endpoints (admin only)
+  async getUsers() {
+    return this.request<User[]>("/admin/users");
+  }
+
+  async createUser(user: CreateUserRequest) {
+    return this.request<User>("/admin/users", {
+      method: "POST",
+      body: JSON.stringify(user),
+    });
+  }
+
+  async updateUser(id: number, user: UpdateUserRequest) {
+    return this.request<User>(`/admin/users/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(user),
+    });
+  }
+
+  async deleteUser(id: number) {
+    return this.request<{ message: string }>(`/admin/users/${id}`, {
+      method: "DELETE",
+    });
   }
 
   async checkDemoMode() {
@@ -813,4 +850,9 @@ export type {
   ReorderFooterLinksRequest,
   NewsletterAutomationSettings,
   UpdateNewsletterAutomationRequest,
+  User,
+  UserRole,
+  CreateUserRequest,
+  UpdateUserRequest,
+  CurrentUser,
 } from "./types";

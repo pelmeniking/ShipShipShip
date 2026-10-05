@@ -201,3 +201,42 @@ export interface UpdateNewsletterAutomationRequest {
   enabled?: boolean;
   trigger_statuses?: EventStatus[];
 }
+
+export type UserRole = "admin" | "editor";
+
+export interface User {
+  id: number;
+  username: string;
+  email: string;
+  display_name: string;
+  role: UserRole;
+  active: boolean;
+  auth_provider: string;
+  last_login_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateUserRequest {
+  username: string;
+  email?: string;
+  display_name?: string;
+  password: string;
+  role: UserRole;
+}
+
+export interface UpdateUserRequest {
+  email?: string;
+  display_name?: string;
+  password?: string;
+  role?: UserRole;
+  active?: boolean;
+}
+
+export interface CurrentUser {
+  id?: number;
+  username: string;
+  display_name: string;
+  email?: string;
+  role: UserRole;
+}

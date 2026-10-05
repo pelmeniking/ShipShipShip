@@ -32,8 +32,8 @@
 
         try {
             await api.login(username, password);
-            // Set authenticated state in the store
-            authStore.setAuthenticated();
+            // Load the signed-in user (including their role) into the store
+            await authStore.init();
             goto("/admin/events");
         } catch (err) {
             error = err instanceof Error ? err.message : m.login_error_failed();

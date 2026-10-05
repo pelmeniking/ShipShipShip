@@ -52,6 +52,8 @@
     export let editingStatusId: number | null = null;
     export let editingStatusName: string = "";
     export let editingInputEl: HTMLInputElement | null = null;
+    // Editors can manage events but not the statuses themselves
+    export let canManageStatuses: boolean = true;
 
     // Status creation state
     export let isCreatingNewStatus: boolean = false;
@@ -348,16 +350,18 @@
                     {m.events_page_create_first_status()}
                 </p>
             </div>
-            <Button
-                variant="outline"
-                on:click={() => {
-                    isCreatingNewStatus = true;
-                }}
-                class="mt-2"
-            >
-                <Plus class="h-4 w-4 me-2" />
-                {m.events_page_create_first_status()}
-            </Button>
+            {#if canManageStatuses}
+                <Button
+                    variant="outline"
+                    on:click={() => {
+                        isCreatingNewStatus = true;
+                    }}
+                    class="mt-2"
+                >
+                    <Plus class="h-4 w-4 me-2" />
+                    {m.events_page_create_first_status()}
+                </Button>
+            {/if}
         </div>
     {:else}
         <div
@@ -441,7 +445,8 @@
                             : ''}"
                         role="listitem"
                         data-list-status={column.status}
-                        draggable={!draggedEventId &&
+                        draggable={canManageStatuses &&
+                            !draggedEventId &&
                             !(
                                 editingStatusId !== null &&
                                 statuses.find((s) => s.id === editingStatusId)
@@ -533,7 +538,7 @@
                                         <Plus class="h-3.5 w-3.5 me-1" />
                                         {m.events_page_new_event()}
                                     </Button>
-                                    {#if statuses.find((s) => s.display_name === column.status)}
+                                    {#if canManageStatuses && statuses.find((s) => s.display_name === column.status)}
                                         <button
                                             type="button"
                                             class="h-6 w-6 flex items-center justify-center text-muted-foreground hover:text-foreground opacity-0 group-hover/section:opacity-100 transition-opacity rounded hover:bg-muted"

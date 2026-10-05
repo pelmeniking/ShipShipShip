@@ -99,8 +99,8 @@ cd ShipShipShip
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ADMIN_USERNAME` | `admin` | Admin username |
-| `ADMIN_PASSWORD` | `admin` | Admin password |
+| `ADMIN_USERNAME` | `admin` | Username of the first admin account (only used when no users exist yet) |
+| `ADMIN_PASSWORD` | `admin` | Password of the first admin account (only used when no users exist yet; change it later under "My account") |
 | `JWT_SECRET` | `your-secret-key-change-in-production` | JWT signing key |
 | `BASE_URL` | _(auto-detected)_ | Base URL of your instance (e.g., `https://changelog.yourdomain.com`) - used for email unsubscribe links |
 | `PORT` | `8080` | Server port |

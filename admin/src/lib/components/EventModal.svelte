@@ -1,6 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte";
     import { api } from "$lib/api";
+    import { isAdmin } from "$lib/stores/auth";
     import * as m from "$lib/paraglide/messages";
 
     import type {
@@ -861,6 +862,7 @@
                                                                                 {tag.name}
                                                                             </span>
                                                                         </button>
+                                                                        {#if $isAdmin}
                                                                         <button
                                                                             type="button"
                                                                             on:click|stopPropagation={() =>
@@ -874,6 +876,7 @@
                                                                                 class="h-3 w-3 text-destructive"
                                                                             />
                                                                         </button>
+                                                                        {/if}
                                                                     </div>
                                                                 {/each}
                                                                 {#if filteredTags.length === 0}
@@ -1048,8 +1051,8 @@
                                     </div>
                                 {/if}
 
-                                <!-- Newsletter Section -->
-                                {#if event}
+                                <!-- Newsletter Section (sending is admin only) -->
+                                {#if event && $isAdmin}
                                     <div class="mt-4">
                                         <h3
                                             class="text-sm font-semibold mb-3 text-foreground"

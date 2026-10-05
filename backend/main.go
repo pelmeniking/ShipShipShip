@@ -186,74 +186,91 @@ func main() {
 		api.GET("/themes/info", handlers.GetThemeInfo)
 	}
 
-	// Protected admin routes
+	// Protected admin routes, available to admins and editors
 	admin := api.Group("/admin")
 	admin.Use(middleware.AuthMiddleware())
 	{
 		admin.GET("/validate", handlers.ValidateToken)
+		admin.PUT("/me/password", handlers.ChangeOwnPassword)
+
+		// Events (changelog entries)
 		admin.GET("/events", handlers.GetAllEvents)
 		admin.POST("/events", handlers.CreateEvent)
 		admin.PUT("/events/:id", handlers.UpdateEvent)
 		admin.DELETE("/events/:id", handlers.DeleteEvent)
-		admin.PUT("/settings", handlers.UpdateSettings)
 		admin.POST("/upload/image", handlers.UploadImage)
 
-		// Tag admin routes
+		// Tags
 		admin.GET("/tags", handlers.GetTags)
 		admin.GET("/tags/usage", handlers.GetTagUsage)
 		admin.GET("/tags/:id", handlers.GetTag)
 		admin.POST("/tags", handlers.CreateTag)
 		admin.PUT("/tags/:id", handlers.UpdateTag)
-		admin.DELETE("/tags/:id", handlers.DeleteTag)
-		// Status admin routes
+
+		// Statuses (read only)
 		admin.GET("/statuses", handlers.GetStatuses)
 		admin.GET("/statuses/:id", handlers.GetStatus)
-		admin.POST("/statuses", handlers.CreateStatus)
-		admin.PUT("/statuses/:id", handlers.UpdateStatus)
-		admin.DELETE("/statuses/:id", handlers.DeleteStatus)
-		admin.POST("/statuses/reorder", handlers.ReorderStatuses)
 
-		// Mail settings routes
-		admin.GET("/settings/mail", handlers.GetMailSettings)
-		admin.POST("/settings/mail", handlers.UpdateMailSettings)
-		admin.POST("/settings/mail/test", handlers.TestMailSettings)
-
-		// Newsletter admin routes
-		admin.GET("/newsletter/stats", handlers.GetNewsletterStats)
-		admin.GET("/newsletter/subscribers", handlers.GetNewsletterSubscribers)
-		admin.GET("/newsletter/subscribers/paginated", handlers.GetNewsletterSubscribersPaginated)
-		admin.DELETE("/newsletter/subscribers/:email", handlers.DeleteNewsletterSubscriber)
-		admin.GET("/newsletter/history", handlers.GetNewsletterHistory)
-		admin.GET("/newsletter/templates", handlers.GetEmailTemplates)
-		admin.PUT("/newsletter/templates", handlers.UpdateEmailTemplates)
-		admin.GET("/newsletter/automation", handlers.GetNewsletterAutomationSettings)
-		admin.PUT("/newsletter/automation", handlers.UpdateNewsletterAutomationSettings)
-
-		// Event publishing routes
+		// Event publishing
 		admin.GET("/events/:id/publish", handlers.GetEventPublishStatus)
 		admin.PUT("/events/:id/publish", handlers.UpdateEventPublicStatus)
 		admin.GET("/events/:id/newsletter/preview", handlers.GetEventNewsletterPreview)
-		admin.POST("/events/:id/newsletter/send", handlers.SendEventNewsletter)
 		admin.GET("/events/:id/newsletter/history", handlers.GetEventEmailHistory)
 
-		// Theme admin routes
-		admin.POST("/themes/apply", handlers.ApplyTheme)
-		admin.POST("/themes/redownload", handlers.RedownloadTheme)
+		// Theme information needed to render the events board
 		admin.GET("/themes/current", handlers.GetCurrentTheme)
 		admin.GET("/themes/info", handlers.GetThemeInfo)
-
-		// Theme manifest and status mapping routes
 		admin.GET("/theme/manifest", handlers.GetThemeManifest)
 		admin.GET("/status-mappings", handlers.GetStatusMappings)
-		admin.PUT("/status-mappings/:statusId", handlers.UpdateStatusMapping)
-		admin.DELETE("/status-mappings/:statusId", handlers.DeleteStatusMapping)
-
-		// Theme settings routes
 		admin.GET("/theme/settings", handlers.GetThemeSettings)
-		admin.PUT("/theme/settings", handlers.UpdateThemeSettings)
+	}
+
+	// Admin-only routes
+	adminOnly := admin.Group("")
+	adminOnly.Use(middleware.RequireRole(models.RoleAdmin))
+	{
+		adminOnly.PUT("/settings", handlers.UpdateSettings)
+
+		// User management
+		adminOnly.GET("/users", handlers.GetUsers)
+		adminOnly.POST("/users", handlers.CreateUser)
+		adminOnly.PUT("/users/:id", handlers.UpdateUser)
+		adminOnly.DELETE("/users/:id", handlers.DeleteUser)
+
+		adminOnly.DELETE("/tags/:id", handlers.DeleteTag)
+
+		// Status management
+		adminOnly.POST("/statuses", handlers.CreateStatus)
+		adminOnly.PUT("/statuses/:id", handlers.UpdateStatus)
+		adminOnly.DELETE("/statuses/:id", handlers.DeleteStatus)
+		adminOnly.POST("/statuses/reorder", handlers.ReorderStatuses)
+
+		// Mail settings routes
+		adminOnly.GET("/settings/mail", handlers.GetMailSettings)
+		adminOnly.POST("/settings/mail", handlers.UpdateMailSettings)
+		adminOnly.POST("/settings/mail/test", handlers.TestMailSettings)
+
+		// Newsletter admin routes
+		adminOnly.GET("/newsletter/stats", handlers.GetNewsletterStats)
+		adminOnly.GET("/newsletter/subscribers", handlers.GetNewsletterSubscribers)
+		adminOnly.GET("/newsletter/subscribers/paginated", handlers.GetNewsletterSubscribersPaginated)
+		adminOnly.DELETE("/newsletter/subscribers/:email", handlers.DeleteNewsletterSubscriber)
+		adminOnly.GET("/newsletter/history", handlers.GetNewsletterHistory)
+		adminOnly.GET("/newsletter/templates", handlers.GetEmailTemplates)
+		adminOnly.PUT("/newsletter/templates", handlers.UpdateEmailTemplates)
+		adminOnly.GET("/newsletter/automation", handlers.GetNewsletterAutomationSettings)
+		adminOnly.PUT("/newsletter/automation", handlers.UpdateNewsletterAutomationSettings)
+		adminOnly.POST("/events/:id/newsletter/send", handlers.SendEventNewsletter)
+
+		// Theme admin routes
+		adminOnly.POST("/themes/apply", handlers.ApplyTheme)
+		adminOnly.POST("/themes/redownload", handlers.RedownloadTheme)
+		adminOnly.PUT("/status-mappings/:statusId", handlers.UpdateStatusMapping)
+		adminOnly.DELETE("/status-mappings/:statusId", handlers.DeleteStatusMapping)
+		adminOnly.PUT("/theme/settings", handlers.UpdateThemeSettings)
 
 		// Migration route (one-time use)
-		admin.POST("/migrate/votes-to-reactions", handlers.MigrateVotesToReactions)
+		adminOnly.POST("/migrate/votes-to-reactions", handlers.MigrateVotesToReactions)
 	}
 
 	// Public events by category endpoint
